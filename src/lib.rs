@@ -10,6 +10,8 @@ pub fn derive_enum_from(input: TokenStream) -> TokenStream {
     // println!("{:#?}", input);
 
     let ident = input.ident;
+    let generics = input.generics;
+    println!("generics: {:#?}", generics);
 
     // println!("ident: {:#?}", ident);
     let variants = if let syn::Data::Enum(data) = input.data {
@@ -25,6 +27,7 @@ pub fn derive_enum_from(input: TokenStream) -> TokenStream {
 
     let from_impls = variants.iter().map(|variant| {
         let variant_ident = &variant.ident;
+
         match variant.fields {
             syn::Fields::Unnamed(ref fields_unnamed) => {
                 // only one field
@@ -34,10 +37,11 @@ pub fn derive_enum_from(input: TokenStream) -> TokenStream {
                 } else {
                     let field = fields_unnamed.unnamed.first().expect("unreachable");
                     let ty = &field.ty;
+
                     quote! {
-                        impl From<#ty> for #ident {
-                            fn from(v: #ty) -> Self {
-                                Self::#variant_ident(v)
+                        impl #generics From<#ty> for #ident #generics {
+                            fn from(value: #ty) -> Self {
+                                #ident::#variant_ident(value)
                             }
                         }
                     }
